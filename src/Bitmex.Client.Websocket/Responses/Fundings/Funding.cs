@@ -13,5 +13,6 @@ namespace Bitmex.Client.Websocket.Responses.Fundings
         public double FundingRate { get; set; }
 
         public double FundingRateDaily { get; set; }
+        public double PredictedRate { get; set; }
     }
 }

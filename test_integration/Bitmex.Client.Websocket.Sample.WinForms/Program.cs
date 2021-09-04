@@ -36,9 +36,9 @@ namespace Bitmex.Client.Websocket.Sample.WinForms
             var logPath = Path.Combine(executingDir, "logs", "verbose.log");
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
+                //.WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
                 //.WriteTo.Console(LogEventLevel.Information)
-                .WriteTo.Debug(LogEventLevel.Debug)
+                //.WriteTo.Debug(LogEventLevel.Debug)
                 .CreateLogger();
         }
     }

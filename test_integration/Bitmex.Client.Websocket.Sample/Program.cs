@@ -17,8 +17,8 @@ namespace Bitmex.Client.Websocket.Sample
     {
         private static readonly ManualResetEvent ExitEvent = new ManualResetEvent(false);
 
-        private static readonly string API_KEY = "your_api_key";
-        private static readonly string API_SECRET = "";
+        private static readonly string API_KEY = "-rPRgVEf5bqqijVKhJQ85ten";
+        private static readonly string API_SECRET = "CWIlyblzR1eNLaYmI7Z_pupC5vSVXDNP-rJRIfqnQ-GBzQ3d";
 
         static void Main(string[] args)
         {
@@ -36,7 +36,6 @@ namespace Bitmex.Client.Websocket.Sample
             Log.Debug("====================================");
             Log.Debug("              STARTING              ");
             Log.Debug("====================================");
-           
 
 
             var url = BitmexValues.ApiWebsocketUrl;
@@ -49,12 +48,11 @@ namespace Bitmex.Client.Websocket.Sample
 
                 using (var client = new BitmexWebsocketClient(communicator))
                 {
-
                     client.Streams.InfoStream.Subscribe(info =>
                     {
                         Log.Information($"Reconnection happened, Message: {info.Info}, Version: {info.Version:D}");
                         SendSubscriptionRequests(client).Wait();
-                    });   
+                    });
 
                     SubscribeToStreams(client);
 
@@ -82,13 +80,20 @@ namespace Bitmex.Client.Websocket.Sample
         {
             client.Send(new PingRequest());
             //client.Send(new BookSubscribeRequest("XBTUSD"));
-            client.Send(new TradesSubscribeRequest("XBTUSD"));
+            //client.Send(new TradesSubscribeRequest("XBTUSD"));
             //client.Send(new TradeBinSubscribeRequest("1m", "XBTUSD"));
             //client.Send(new TradeBinSubscribeRequest("5m", "XBTUSD"));
-            client.Send(new QuoteSubscribeRequest("XBTUSD"));
+            //client.Send(new QuoteSubscribeRequest("XBTUSD"));
             client.Send(new LiquidationSubscribeRequest());
-            client.Send(new InstrumentSubscribeRequest("XBTUSD"));
-            client.Send(new FundingsSubscribeRequest("XBTUSD"));
+
+
+            // client.Send(new InstrumentSubscribeRequest("XBTUSD"));
+            // client.Send(new InstrumentSubscribeRequest("XBTH21"));
+            // client.Send(new InstrumentSubscribeRequest("XBTM21"));
+            // client.Send(new InstrumentSubscribeRequest("ETHUSD"));
+            // client.Send(new InstrumentSubscribeRequest("ETHUSDH21"));
+
+            //client.Send(new FundingsSubscribeRequest("XBTUSD"));
             //client.Send(new Book25SubscribeRequest("XBTUSD"));
             //client.Send(new Book10SubscribeRequest("XBTUSD"));
 
@@ -107,9 +112,20 @@ namespace Bitmex.Client.Websocket.Sample
                 client.Send(new WalletSubscribeRequest());
                 client.Send(new OrderSubscribeRequest());
                 client.Send(new PositionSubscribeRequest());
+                client.Send(new MarginSubscribeRequest());
             });
+            
+            client.Streams.PongStream.Subscribe(x =>
+                Log.Information($"Pong received ({x.Message})"));
 
+            /*
+            client.Streams.MarginStream.Subscribe(y =>
+                y.Data.ToList().ForEach(x =>
+                    Log.Information(
+                        $"Margin {x.Account}, {x.Currency} margin: {x.MarginUsedPcnt} upnl: {x.UnrealisedPnl} upnl: {x.MarginLeverage} bal: {x.WalletBalance}"))
+            );*/
 
+/*
             client.Streams.SubscribeStream.Subscribe(x =>
             {
                 Log.Information(x.IsSubscription
@@ -143,8 +159,9 @@ namespace Bitmex.Client.Websocket.Sample
 
             client.Streams.TradesStream.Subscribe(y =>
                 y.Data.ToList().ForEach(x =>
-                    Log.Information($"Trade {x.Symbol} executed. Time: {x.Timestamp:HH:mm:ss.fff}, [{x.Side}] Amount: {x.Size}, " +
-                                    $"Price: {x.Price}, Match: {x.TrdMatchId}"))
+                    Log.Information(
+                        $"Trade {x.Symbol} executed. Time: {x.Timestamp:HH:mm:ss.fff}, [{x.Side}] Amount: {x.Size}, " +
+                        $"Price: {x.Price}, Match: {x.TrdMatchId}"))
             );
 
             client.Streams.BookStream.Subscribe(book =>
@@ -159,18 +176,20 @@ namespace Bitmex.Client.Websocket.Sample
 
             client.Streams.QuoteStream.Subscribe(y =>
                 y.Data.ToList().ForEach(x =>
-                    Log.Information($"Quote {x.Symbol}. Bid: {x.BidPrice} - {x.BidSize} Ask: {x.AskPrice} - {x.AskSize}"))
+                    Log.Information(
+                        $"Quote {x.Symbol}. Bid: {x.BidPrice} - {x.BidSize} Ask: {x.AskPrice} - {x.AskSize}"))
             );
-
+*/
             client.Streams.LiquidationStream.Subscribe(y =>
                 y.Data.ToList().ForEach(x =>
                     Log.Information(
                         $"Liquidation Action: {y.Action}, OrderID: {x.OrderID}, Symbol: {x.Symbol}, Side: {x.Side}, Price: {x.Price}, LeavesQty: {x.leavesQty}"))
             );
-
+/*
             client.Streams.TradeBinStream.Subscribe(y =>
                 y.Data.ToList().ForEach(x =>
-                Log.Information($"TradeBin table:{y.Table} {x.Symbol} executed. Time: {x.Timestamp:mm:ss.fff}, Open: {x.Open}, " +
+                    Log.Information(
+                        $"TradeBin table:{y.Table} {x.Symbol} executed. Time: {x.Timestamp:mm:ss.fff}, Open: {x.Open}, " +
                         $"Close: {x.Close}, Volume: {x.Volume}, Trades: {x.Trades}"))
             );
 
@@ -178,10 +197,11 @@ namespace Bitmex.Client.Websocket.Sample
             {
                 x.Data.ToList().ForEach(y =>
                 {
-                    Log.Information($"Instrument, {y.Symbol}, " +
-                                    $"price: {y.MarkPrice}, last: {y.LastPrice}, " +
-                                    $"mark: {y.MarkMethod}, fair: {y.FairMethod}, direction: {y.LastTickDirection}, " +
-                                    $"funding: {y.FundingRate} i: {y.IndicativeFundingRate} s: {y.FundingQuoteSymbol}");
+                    if (y.Expiry.HasValue)
+                        Log.Information($"Instrument, {y.Symbol}, " +
+                                        $"price: {y.MarkPrice}, last: {y.LastPrice}, expiry: {y.Expiry}," +
+                                        $"mark: {y.MarkMethod}, fair: {y.FairMethod}, direction: {y.LastTickDirection}, " +
+                                        $"funding: {y.FundingRate} i: {y.IndicativeFundingRate} s: {y.FundingQuoteSymbol}");
                 });
             });
 
@@ -192,7 +212,7 @@ namespace Bitmex.Client.Websocket.Sample
                     Log.Information($"Funding {f.Symbol}, Timestamp: {f.Timestamp}, Interval: {f.FundingInterval}, " +
                                     $"Rate: {f.FundingRate}, RateDaily: {f.FundingRateDaily}");
                 });
-            });
+            });*/
 
 
             // example of unsubscribe requests
